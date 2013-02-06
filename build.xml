@@ -1,0 +1,164 @@
+<project name="Gitmin" default="dist" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+	<description>Gitmin</description>
+	<property name="ver" value="0.1"/>
+	<property name="src" location="src"/>
+	<property name="build" location="build"/>
+	<property name="dist" location="${build}/dist"/>
+	<property name="lib"  location="${build}/lib"/>
+	<property name="compile-lib"  location="${lib}/compile"/>
+	<property name="runtime-lib"  location="${lib}/runtime"/>
+	<property name="res"  location="${src}/main/resources"/>
+	<property name="web"  location="${src}/main/webapp"/>
+	<property name="jar"  location="${dist}/gitmin-${ver}.jar"/>
+	<property name="war"  location="${dist}/gitmin.war"/>
+	<property name="classes"  location="${build}/classes"/>
+	<property name="code"  location="${src}/main/java"/>
+	<property name="test-code"  location="${src}/test/java"/>
+	<property environment="env"/>
+
+	<path id="compile-jars">
+		<!-- <pathelement path="classes/" /> -->
+		<fileset dir="${compile-lib}"><include name="**/*.jar" /></fileset>
+		<fileset dir="${runtime-lib}"><include name="**/*.jar" /></fileset>
+	</path>
+
+	<target name="compile">
+		<mkdir dir="${classes}"/>
+		<javac includeantruntime="false" destdir="${classes}" debug="true">
+			<src path="${code}" />
+			<compilerarg value="-Xlint"/>
+			<classpath refid="compile-jars" />
+		</javac>
+	</target>
+	<target name="compile-test">
+		<mkdir dir="${classes}-test"/>
+		<javac includeantruntime="false" destdir="${classes}-test" debug="true">
+			<src path="${code}" />
+			<src path="${test-code}" />
+			<compilerarg value="-Xlint"/>
+			<classpath refid="compile-jars" />
+		</javac>
+	</target>
+
+	<target name="dist" depends="compile">
+		<mkdir dir="${build}/war"/>
+		<mkdir dir="${build}/war/WEB-INF"/>
+		<mkdir dir="${build}/war/WEB-INF/classes"/>
+		<mkdir dir="${dist}"/>
+
+		<copy todir="${build}/war">
+			<fileset dir="${web}" />
+		</copy>
+
+		<copy todir="${build}/war/WEB-INF/classes">
+			<fileset dir="${res}" />
+			<fileset dir="${code}">
+				<exclude name="**/*.java*"/>
+				<include name="**/*.vm"/>
+				<include name="**/*.properties"/>
+			</fileset>
+		</copy>
+
+		<copy todir="${build}/war/WEB-INF/classes">
+			<fileset dir="${classes}" />
+		</copy>
+
+		<war destfile="${war}" webxml="${build}/war/WEB-INF/web.xml">
+			<fileset dir="${build}/war"/>
+			<lib dir="${runtime-lib}">
+				<!--exclude name="jdbc1.jar"/-->
+			</lib>
+			<classes dir="${build}/war/WEB-INF/classes"/>
+			<manifest>
+				<attribute name="Built-By" value="${env.USER}"/>
+				<attribute name="Implementation-Vendor" value="The ClickPro.com LLC"/>
+				<attribute name="Implementation-Title" value="gitmin"/>
+				<attribute name="Implementation-Version" value="1.0.0beta2"/>
+			</manifest>
+		</war>
+	</target>
+
+	<target name="jar" depends="compile">
+		<mkdir dir="${dist}"/>
+		<jar jarfile="${jar}" basedir="${classes}">
+		</jar>
+	</target>
+
+	<target name="run" depends="dist">
+		<java jar="${compile-lib}/jetty-runner.jar" fork="true">
+			<jvmarg value="-Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n"/>
+			<!-- classpath refid="compile-jars" / -->
+			<arg value="${war}" />
+		</java>
+	</target>
+
+	<target name="test" depends="compile-test">
+		<copy todir="${classes}-test">
+			<fileset dir="${res}" />
+		</copy>
+		<java fork="true" classname="org.junit.runner.JUnitCore">
+			<classpath refid="compile-jars" />
+			<classpath>
+				<!--
+				<pathelement location="dist/test.jar"/>
+				-->
+				<pathelement path="${classes}-test"/>
+			</classpath>
+			<arg value="co.bledo.gitmin.GitTest" />
+		</java>
+	</target>
+
+
+	<!--target name="deploy" depends="dist">
+		<exec failonerror="true" executable="${env.ASADMIN}">
+			<arg value="redeploy" />
+			<arg value="${war}" />
+			<arg value="- - name" />
+			<arg value="gitmin" />
+		</exec>
+	</target-->
+
+	<target name="getlibs" depends="ivy">
+		<mkdir dir="${compile-lib}"/>
+		<mkdir dir="${runtime-lib}"/>
+		<ivy:settings file="ivysettings.xml"/>
+		<ivy:retrieve conf="runtime" pattern="${runtime-lib}/[artifact]-[type]-[revision].[ext]" />
+		<ivy:retrieve conf="compile" pattern="${compile-lib}/[artifact]-[type]-[revision].[ext]" />
+		<mvnget o="org/mortbay/jetty" n="jetty-runner" r="8.1.7.v20120910" d="${compile-lib}/jetty-runner.jar" />
+	</target>
+
+	<target name="cleanAll" depends="clean">
+		<delete dir="${lib}"/>
+	</target>
+
+	<target name="clean">
+		<delete dir="${dist}"/>
+	</target>
+
+	<target name="ivy" unless="sikip.download">
+		<mkdir dir="${compile-lib}"/>
+		<wget src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/2.2.0/ivy-2.2.0.jar" dest="${compile-lib}/ivy-2.2.0.jar"/>
+		<path id="ivy.lib.path">
+			<fileset dir="${compile-lib}" includes="ivy-*.jar"/>
+		</path>
+		<taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+	</target>
+
+	<macrodef name="mvnget">
+		<attribute name="o" default="NOT SET"/>
+		<attribute name="n" default="NOT SET"/>
+		<attribute name="r" default="NOT SET"/>
+		<attribute name="d" default="NOT SET"/>
+		<sequential>
+			<wget src="http://repo2.maven.org/maven2/@{o}/@{n}/@{r}/@{n}-@{r}.jar" dest="@{d}" />
+		</sequential>
+	</macrodef>
+
+	<macrodef name="wget">
+		<attribute name="src" default="NOT SET"/>
+		<attribute name="dest" default="NOT SET"/>
+		<sequential>
+			<get src="@{src}" dest="@{dest}" verbose="true" usetimestamp="true" skipexisting="true" />
+		</sequential>
+	</macrodef>
+</project>

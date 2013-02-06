@@ -20,6 +20,8 @@ package co.bledo.gitmin.servlet;
 
 
 import co.bledo.gitmin.Gitmin;
+import co.bledo.gitmin.GitminConfig;
+
 import java.util.Enumeration;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -29,43 +31,47 @@ import javax.servlet.annotation.WebServlet;
 @WebServlet(name = "Auth", urlPatterns = {"/git/*"})
 public class Git extends org.eclipse.jgit.http.server.GitServlet
 {
+	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(Git.class);
+	
 	private static final long serialVersionUID = 1L;
 	
 	//base-path
 	@Override
 	public void init(final ServletConfig config) throws ServletException
 	{
+		log.entry(config);
 		super.init(
 			new ServletConfig() {
 				@Override
 				public String getServletName() {
 					return config.getServletName();
 				}
-				
+
 				@Override
 				public ServletContext getServletContext() {
 					return config.getServletContext();
 				}
-				
+
 				@Override
 				public Enumeration<String> getInitParameterNames() {
 					return config.getInitParameterNames();
 				}
-				
+
 				@Override
 				public String getInitParameter(String arg0) {
 					if ("base-path".equals(arg0))
 					{
-						return Gitmin.config.getGitRepositoriesPath();
+						return GitminConfig.getGitRepositoriesPath();
 					}
 					else if ("eport-all".equals(arg0))
 					{
-						return Gitmin.config.getGitExportAll();
+						return GitminConfig.getGitExportAll();
 					}
-					
+
 					return config.getInitParameter(arg0);
 				}
 			}
 		);
+		log.exit();
 	}
 }

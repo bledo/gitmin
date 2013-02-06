@@ -25,6 +25,7 @@ package co.bledo.gitmin;
 
 import co.bledo.Util;
 import co.bledo.VelocityTplParser;
+import co.bledo.mvc.BledoServlet;
 import co.bledo.mvc.Request;
 import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
@@ -44,6 +45,10 @@ public class VelocityResponse extends co.bledo.mvc.response.VelocityResponse
 		return resp;
 	}
 
+	public static VelocityResponse newInstance(Request req, BledoServlet obj)
+	{
+		return newInstance(req, obj.getClass());
+	}
 	public static VelocityResponse newInstance(Request req, Class<?> cls)
 	{
 		// Get View
@@ -78,7 +83,7 @@ public class VelocityResponse extends co.bledo.mvc.response.VelocityResponse
 		}
 		
 		// Alert messages
-		Map<String, String> alert_messages = Gitmin.session.getAlertMessages(req);
+		Map<String, String> alert_messages = GitminSession.getAlertMessages(req);
 		vp.assign("_alert_messages", alert_messages);
 		assign("ALERT_MESSAGES", vp.fetch("co/bledo/gitmin/servlet/view/_alert_messages.vm"));
 		

@@ -19,7 +19,6 @@ package co.bledo.gitmin.servlet;
 //========================================================================
 
 
-import co.bledo.logger.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,14 +62,14 @@ import org.apache.commons.lang3.StringUtils;
 @WebServlet(name="G", urlPatterns={"/g/*"})
 public class G extends HttpServlet
 {
+	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(G.class);
 	private static final long serialVersionUID = 1L;
 
-	private static Logger log = Logger.getLogger(G.class);
 
 	private String _gitBackend = "/usr/lib/git-core/git-http-backend";
-	private String _gitProjectRoot = "/home/ricardo/dev";
+	//private String _gitBackend = "/tmp/git-repo/xxx/test.sh";
+	private String _gitProjectRoot = "/tmp/git-repo";
 	private String _gitExportAll = "";
-
 
 	private String _cmdPrefix;
 	private EnvList _env;
@@ -79,6 +78,7 @@ public class G extends HttpServlet
 	/* ------------------------------------------------------------ */
 	public void init() throws ServletException
 	{
+		log.entry();
 		_env=new EnvList();
 		_cmdPrefix=getInitParameter("commandPrefix");
 		
@@ -86,19 +86,22 @@ public class G extends HttpServlet
 		File dir=new File(_gitProjectRoot);
 		if (!dir.exists())
 		{
-			log.warn("CGI: CGI bin does not exist - "+dir);
+			log.warn("CGI: CGI bin does not exist - {}", dir);
+			log.exit();
 			return;
 		}
 		
 		if (!dir.canRead())
 		{
-			log.warn("CGI: CGI bin is not readable - "+dir);
+			log.warn("CGI: CGI bin is not readable - {}", dir);
+			log.exit();
 			return;
 		}
 		
 		if (!dir.isDirectory())
 		{
-			log.warn("CGI: CGI bin is not a directory - "+dir);
+			log.warn("CGI: CGI bin is not a directory - {}", dir);
+			log.exit();
 			return;
 		}
 		
@@ -120,11 +123,42 @@ public class G extends HttpServlet
 				_env.set("SystemRoot", windir!=null ? windir : "C:\\WINDOWS");
 			}
 		}
+		log.exit();
 	}
 	
 	/* ------------------------------------------------------------ */
 	public void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException
 	{
+		if("PROPFIND".equals(req.getMethod()))
+		{
+			String xml = "<?xml version=\"1.0\"?>" +
+					" <a:multistatus xmlns:a=\"DAV:\">" +
+					" <a:response>" +
+					" <a:href>http://localhost:8080/g/webtd.git/</a:href>" +
+					" <a:propstat>" +
+					" <a:prop>" +
+					" <a:supportedlock> " +
+					"<a:lockentry>" +
+					" <a:lockscope><a:local/></a:lockscope>" +
+					" <a:locktype> " +
+					"<a:transaction><a:local/></a:transaction> " +
+					"</a:locktype>" +
+					" </a:lockentry> " +
+					"<a:lockentry>" +
+					" <a:lockscope><a:shared/></a:lockscope> " +
+					"<a:locktype><a:write/></a:locktype> " +
+					"</a:lockentry> " +
+					"</a:supportedlock>" +
+					" </a:prop>" +
+					" <a:status>HTTP/1.1 200 OK</a:status>" +
+					" </a:propstat> " +
+					"</a:response> " +
+					"</a:multistatus>";
+			res.getWriter().print(xml);
+			return;
+		}
+		
+		log.entry(req, res);
 		File exe = new File(_gitBackend);
 		
 		if (!exe.exists()||exe.isDirectory())
@@ -135,10 +169,11 @@ public class G extends HttpServlet
 		else
 		{
 			req.setAttribute( "XXX", req.getMethod() + " " + req.getRequestURI() + "?" + req.getQueryString());
-			log.debug("####### REQUEST " + req.getAttribute("XXX"));
+			log.debug("####### REQUEST {}", req.getAttribute("XXX"));
 			exec(exe,req,res);
 			//System.out.println("####### END REQUEST " + req.getRequestURI());
 		}
+		log.exit();
 	}
 	
 	/* ------------------------------------------------------------ */
@@ -147,6 +182,8 @@ public class G extends HttpServlet
 	 */
 	private void exec(File command, HttpServletRequest req, HttpServletResponse res) throws IOException
 	{
+		log.entry(command, req, res);
+		
 		String pathInfo = req.getPathInfo();
 		String path=command.getAbsolutePath();
 		File dir=command.getParentFile();
@@ -175,7 +212,7 @@ public class G extends HttpServlet
 			env.set("PATH_INFO",pathInfo);
 		}
 
-		log.info("path:{0}; path_translated:{1}; path_info:{2};", new Object[]{path, pathTranslated, pathInfo});
+		log.info("path:{}; path_translated:{}; path_info:{};", new Object[]{path, pathTranslated, pathInfo});
 
 		env.set("PATH_TRANSLATED",pathTranslated);
 		env.set("QUERY_STRING",req.getQueryString());
@@ -234,7 +271,6 @@ public class G extends HttpServlet
 			execCmd=_cmdPrefix+" "+execCmd;
 		}
 		
-		//log.warning("exec : " + execCmd);
 		final Process p = Runtime.getRuntime().exec(execCmd, env.getEnvArray(), dir);
 		
 		// hook processes input to browser's output (async)
@@ -320,7 +356,7 @@ public class G extends HttpServlet
 			StringWriter sw = new StringWriter();
 			IOUtils.copy(p.getErrorStream(), sw);
 			sw.flush();
-			log.debug("####  " + req.getAttribute("XXX") + ":::\n" + sw.toString());
+			log.debug("####  {} ::: {}", req.getAttribute("XXX"), sw.toString());
 			p.waitFor();
 			
 			if (!_ignoreExitState)
@@ -328,7 +364,7 @@ public class G extends HttpServlet
 				int exitValue=p.exitValue();
 				if (0!=exitValue)
 				{
-					log.warn("Non-zero exit status ({0}) from CGI program: {1}", new Object[]{exitValue, path});
+					log.warn("Non-zero exit status ({}) from CGI program: {}", new Object[]{exitValue, path});
 					if (!res.isCommitted()) {
 						res.sendError(500,"Failed to exec CGI");
 					}
@@ -339,11 +375,11 @@ public class G extends HttpServlet
 		{
 			// browser has probably closed its input stream - we
 			// terminate and clean up...
-			log.debug("CGI: Client closed connection!");
+			log.warn("CGI: Client closed connection!");
 		}
 		catch (InterruptedException ie)
 		{
-			log.debug("CGI: interrupted!");
+			log.warn("CGI: interrupted!");
 		}
 		finally
 		{
@@ -362,6 +398,7 @@ public class G extends HttpServlet
 			p.destroy();
 			// Log.debug("CGI: terminated!");
 		}
+		log.exit();
 	}
 	
 	/**
@@ -371,13 +408,14 @@ public class G extends HttpServlet
 	 * @throws IOException
 	 */
 	private String getTextLineFromStream( InputStream is ) throws IOException {
+		log.entry(is);
 		StringBuffer buffer = new StringBuffer();
 		int b;
 		
 		while( (b = is.read()) != -1 && b != (int) '\n' ) {
 			buffer.append( (char) b );
 		}
-		return buffer.toString().trim();
+		return log.exit(buffer.toString().trim());
 	}
 	/* ------------------------------------------------------------ */
 	/**
@@ -408,7 +446,7 @@ public class G extends HttpServlet
 		/** Get representation suitable for passing to exec. */
 		public String[] getEnvArray()
 		{
-			return (String[])envMap.values().toArray(new String[envMap.size()]);
+			return envMap.values().toArray(new String[envMap.size()]);
 		}
 		
 		public String toString()

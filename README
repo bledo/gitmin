@@ -1,0 +1,3 @@
+ant getlibs
+ant compile
+ant run <- implicit compile

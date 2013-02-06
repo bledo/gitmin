@@ -20,32 +20,43 @@ package co.bledo.gitmin.servlet;
 
 
 import co.bledo.gitmin.Gitmin;
+import co.bledo.gitmin.GitminSession;
+import co.bledo.gitmin.GitminStorage;
 import static co.bledo.gitmin.Gitmin._;
 import co.bledo.gitmin.VelocityResponse;
 import co.bledo.gitmin.db.DbException;
 import co.bledo.gitmin.db.NotFoundException;
 import co.bledo.gitmin.db.User;
-import co.bledo.logger.Logger;
 import co.bledo.mvc.Cookie;
 import co.bledo.mvc.Request;
 import co.bledo.mvc.response.Redirect;
 import co.bledo.mvc.response.Response;
 import javax.servlet.annotation.WebServlet;
 
+
+
 @WebServlet(name = "Auth", urlPatterns = {"/Auth/*"})
 public class Auth extends BaseServlet
 {
+	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(Auth.class);
+	
 	private static final long serialVersionUID = 1L;
 	
-	private static final Logger log = Logger.getLogger(Auth.class);
+	//private static final Logger log = Logger.getLogger(Auth.class);
 	
 	public Response index(Request req)
 	{
-		return login(req);
+		log.entry();
+
+		Response resp = login(req);
+
+		return log.exit(resp);
 	}
 	
 	public final Response login(Request req)
 	{
+		log.entry();
+
 		VelocityResponse resp = VelocityResponse.newInstance(req, "Auth.login.vm");
 		
 		resp.assign("username", req.getParam("username",""));
@@ -57,17 +68,18 @@ public class Auth extends BaseServlet
 			resp.assign("checked", "unchecked");
 		}
 		
-		return resp;
+		return log.exit(resp);
 	}
 	
 	public final Response dologin(Request req)
 	{
-		log.info("");
+		log.entry();
+
 		
-		Boolean isLogged = Gitmin.session.isLogged(req);
+		Boolean isLogged = GitminSession.isLogged(req);
 		if (isLogged)
 		{
-			return new Redirect(req.getContextPath() + "/Index");
+			return log.exit(new Redirect(req.getContextPath() + "/Index"));
 		}
 		
 		User user;
@@ -75,36 +87,37 @@ public class Auth extends BaseServlet
 			String username = req.getParam("username");
 			String password = req.getParam("password");
 			String remember = req.getParam("login_remember", "0");
-			user = Gitmin.storage.userAuth(username, password);
+			user = GitminStorage.userAuth(username, password);
+			/*
 			if (!user.active)
 			{
 				log.warn("user {0} is inactive", user.email);
 				Gitmin.alertError(req, _(req, "login.inactive.account"));
 				return login(req);
+			} else {
 			}
-			else
+			*/
+			
+			log.info("login of {} successful", user.email);
+			Redirect resp = new Redirect( GitminSession.getWelcomeUrl(req) ); 
+			GitminSession.login(req, user);  // login
+			
+			// remember button is clicked
+			if ("1".equals(remember))
 			{
-				log.info("login of {0} successful", user.email);
-				Redirect resp = new Redirect( Gitmin.session.getWelcomeUrl(req) ); 
-				Gitmin.session.login(req, user);  // login
-				
-				// remember button is clicked
-				if ("1".equals(remember))
-				{
-					Cookie cookie = new Cookie("login_remember", "1");
-					cookie.setPath(req.getContextPath() + "/Login/");
-					resp.addCookie(cookie);
-				}
-				return resp;
+				Cookie cookie = new Cookie("login_remember", "1");
+				cookie.setPath(req.getContextPath() + "/Login/");
+				resp.addCookie(cookie);
 			}
+			return log.exit( resp );
 		} catch (DbException e) {
-			log.error("{0}", e);
+			log.catching(e);
 			Gitmin.alertError(req, _(req, "login.auth.internal.error"));
-			return login(req);
+			return log.exit( login(req) );
 		} catch (NotFoundException e) {
-			log.error("{0}", e);
+			log.catching(e);
 			Gitmin.alertError(req, _(req, "login.auth.error"));
-			return login(req);
+			return log.exit( login(req) );
 		}
 	}
 }

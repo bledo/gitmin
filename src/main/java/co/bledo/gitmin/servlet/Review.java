@@ -18,37 +18,53 @@ package co.bledo.gitmin.servlet;
  *
 */
 
+import java.io.IOException;
 
-import co.bledo.gitmin.Gitmin;
+import javax.servlet.annotation.WebServlet;
+
+import co.bledo.gitmin.GitminReview;
 import co.bledo.gitmin.GitminSession;
+import co.bledo.gitmin.VelocityResponse;
 import co.bledo.mvc.Request;
-import co.bledo.mvc.response.Redirect;
 import co.bledo.mvc.response.Response;
 
-public class PrivateServlet extends BaseServlet
+
+@WebServlet(name = "Repo", urlPatterns = {"/repo/*"})
+public class Review extends PrivateServlet
 {
 	private static final long serialVersionUID = 1L;
 	
-	private static final co.bledo.logger.Logger log = co.bledo.logger.Logger.getLogger(PrivateServlet.class);
+	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(Review.class);
 
-	@Override
-	protected Response processRequest(Request req) throws Exception
+	public Response index(Request request) throws Exception
 	{
-		Response resp = null;
-		Boolean isLogged = GitminSession.isLogged(req);
-		if (!isLogged)
-		{
-			log.error("{0} requires authentication...redirected to Auth/login", req.getUri());
-			GitminSession.setWelcomeUrl(req, req.getUri());
-			Gitmin.alertError(req, Gitmin._(req, "auth.required"));
-			resp = new Redirect(req.getContextPath() + "/Auth");
-		}
-		else
-		{
-			resp = super.processRequest(req);
-		}
+		log.entry(request);
 		
-		return resp;
+		VelocityResponse resp = VelocityResponse.newInstance(request, this);
+		
+		resp.assign(
+			"LIST_OPEN",
+			GitminReview.getReviewList(
+				GitminSession.getUser(request),
+				"refs/heads/master",
+				"refs/remotes/origin/master"
+			)
+		);
+		
+		return log.exit(resp);
 	}
-	
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

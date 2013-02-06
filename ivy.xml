@@ -1,0 +1,38 @@
+<ivy-module version="2.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="http://ant.apache.org/ivy/schemas/ivy.xsd"
+	xmlns:e="http://ant.apache.org/ivy/extra">
+    <info organisation="co.bledo" module="dependency-resolver"/>
+
+    <configurations defaultconfmapping="runtime">
+	<conf name="runtime" />
+	<conf name="compile" />
+    </configurations>
+
+    <dependencies>
+	<dependency org="junit" name="junit" rev="4.10" conf="compile->default,sources" />
+	<dependency org="org.glassfish.extras" name="glassfish-embedded-all" rev="3.1" conf="compile->default,sources" />
+
+	<dependency org="mysql" name="mysql-connector-java" rev="5.1.20" conf="runtime->default,sources" />
+  	<dependency org="org.json" name="json" rev="20090211" conf="runtime->default,sources" />
+  	<dependency org="javax.activation" name="activation" rev="1.1.1" conf="runtime->default,sources" />
+  	<dependency org="javax.mail" name="mail" rev="1.4.5" conf="runtime->default,sources" />
+	<dependency org="org.apache.velocity" name="velocity" rev="1.7" conf="runtime->default,sources" />
+  	<dependency org="commons-fileupload" name="commons-fileupload" rev="1.2.2" conf="runtime->default,sources" />
+  	<dependency org="commons-io" name="commons-io" rev="2.3" conf="runtime->default,sources" />
+  	<dependency org="org.apache.commons" name="commons-lang3" rev="3.0" conf="runtime->default,sources" />
+  	<dependency org="commons-codec" name="commons-codec" rev="1.7" conf="runtime->default,sources" />
+
+  	<dependency org="org.xerial" name="sqlite-jdbc" rev="3.7.2" conf="runtime->default,sources" />
+
+	<dependency org="org.eclipse.jgit" name="org.eclipse.jgit" rev="2.1.0.201209190230-r" conf="runtime->default,sources" />
+	<dependency org="org.eclipse.jgit" name="org.eclipse.jgit.http.server" rev="2.1.0.201209190230-r" conf="runtime->default,sources" />
+
+	<dependency org="co.bledo" name="bledo" rev="1.0-SNAPSHOT" conf="runtime->default,sources" />
+	<dependency org="org.ini4j" name="ini4j" rev="0.5.2" conf="runtime->default,sources" />
+
+	<dependency org="org.apache.logging.log4j" name="log4j-api" rev="2.0-beta4" conf="runtime->default,sources" />
+	<dependency org="org.apache.logging.log4j" name="log4j-core" rev="2.0-beta4" conf="runtime->default,sources" />
+
+    </dependencies>
+</ivy-module>

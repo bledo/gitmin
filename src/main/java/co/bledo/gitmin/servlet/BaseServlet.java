@@ -19,6 +19,10 @@ package co.bledo.gitmin.servlet;
 */
 
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
+import co.bledo.Util;
 import co.bledo.gitmin.VelocityResponse;
 import co.bledo.mvc.BledoServlet;
 import co.bledo.mvc.HttpError404;
@@ -54,7 +58,12 @@ public class BaseServlet extends BledoServlet
 		catch (Exception ex)
 		{
 			vr = VelocityResponse.newInstance(request, "_error.vm");
-			vr.assign("ERROR", ex);
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			ex.printStackTrace(pw);
+			vr.assign("ERROR", sw.toString());
+			Util.closeQuietly(pw);
+			Util.closeQuietly(sw);
 		}
 		return vr;
 	}

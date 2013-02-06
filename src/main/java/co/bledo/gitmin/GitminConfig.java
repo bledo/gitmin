@@ -84,6 +84,11 @@ public class GitminConfig
 	{
 		return getProp("gitmin.db.url");
 	}
+	
+	public static String getIniDbFile()
+	{
+		return getProp("gitmin.inidbfile");
+	}
 
 	public static String getDbAuthQuery()
 	{

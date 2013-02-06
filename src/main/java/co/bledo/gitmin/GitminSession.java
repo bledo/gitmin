@@ -30,20 +30,26 @@ import co.bledo.gitmin.db.User;
 public class GitminSession
 {
 
-	public void login(Request req, User user)
+	public static void login(Request req, User user)
 	{
 		HttpSession sess = req.getSession(true);
 		sess.setAttribute(Keys.session_user, user);
 		sess.setAttribute(Keys.session_is_logged, new Boolean(true));
 	}
+	
+	public static User getUser(Request req)
+	{
+		HttpSession sess = req.getSession(true);
+		return (User) sess.getAttribute(Keys.session_user);
+	}
 
-	public void logout(Request req)
+	public static void logout(Request req)
 	{
 		if (!isLogged(req)) { return; } // not logged, return
 		req.getSession(true).setAttribute("is_logged", false);
 	}
 
-	public Boolean isLogged(Request req)
+	public static Boolean isLogged(Request req)
 	{
 		HttpSession sess =  req.getSession(true);
 		Boolean logged = (Boolean) sess.getAttribute("is_logged");
@@ -53,13 +59,13 @@ public class GitminSession
 		return logged;
 	}
 
-	public void setWelcomeUrl(Request req, String uri)
+	public static void setWelcomeUrl(Request req, String uri)
 	{
 		HttpSession sess = req.getSession(true);
 		sess.setAttribute(Keys.session_welcomepage, uri);
 	}
 
-	public String getWelcomeUrl(Request req)
+	public static String getWelcomeUrl(Request req)
 	{
 		HttpSession sess = req.getSession(true);
 		String uri = (String) sess.getAttribute(Keys.session_welcomepage);
@@ -71,7 +77,7 @@ public class GitminSession
 		return uri;
 	}
 
-	public Map<String, String> getAlertMessages(Request req)
+	public static Map<String, String> getAlertMessages(Request req)
 	{
 		HttpSession sess = req.getSession(true);
 

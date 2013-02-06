@@ -72,10 +72,11 @@ public class Gitmin
 		_setAlertMsg(req, Keys.alert_success, msg);
 	}
 	
-	
+	/*
 	public static GitminSession session = new GitminSession();
 	public static GitminStorage storage = new GitminStorage();
 	public static GitminConfig config = new GitminConfig();
+	*/
 }
 
 

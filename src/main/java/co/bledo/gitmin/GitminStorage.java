@@ -23,17 +23,30 @@ import co.bledo.Util;
 import co.bledo.gitmin.db.DbException;
 import co.bledo.gitmin.db.NotFoundException;
 import co.bledo.gitmin.db.User;
-import co.bledo.logger.Logger;
+
+import java.io.File;
+import java.io.IOException;
+/*
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+*/
+
+import org.ini4j.Ini;
+import org.ini4j.InvalidFileFormatException;
+
 
 public class GitminStorage
 {
-	public Logger log = Logger.getLogger(GitminStorage.class);
+	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(GitminStorage.class);
 	
+	public static void query(String sql)
+	{
+	}
+	
+	/*
 	private boolean __init = false;
 	private synchronized void _init() throws ClassNotFoundException
 	{
@@ -72,35 +85,69 @@ public class GitminStorage
 		Connection conn = DriverManager.getConnection( GitminConfig.getDbUrl() );
 		return conn;
 	}
-
-	public User userAuth(String user, String pass) throws NotFoundException, DbException
+	*/
+	
+	
+	private static Ini _ini = null;
+	private static synchronized Ini getIniDb() throws InvalidFileFormatException, IOException
 	{
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet res = null;
-		try {
-			conn = getConnection();
-			stmt = conn.prepareStatement("SELECT * FROM user WHERE (username = ? or email = ?) AND `password` = ?");
-			stmt.setString(1, user);
-			stmt.setString(2, user);
-			stmt.setString(3, Util.md5( pass ) );
-
-			if ( !stmt.execute() ) {
-				throw new NotFoundException( "Record not found" );
+		log.entry();
+		if (_ini == null)
+		{
+			String filename = GitminConfig.getIniDbFile();
+			File file = new File(filename);
+			if (file.createNewFile())
+			{
+				log.info("No database ini file ... creating a default one");
+				// new file
+				_ini = new Ini( file );
+				_ini.add("user", "admin", Util.md5("admin"));
+				_ini.store();
+			}
+			else
+			{
+				// existing file
+				_ini = new Ini( file );
 			}
 
-			res = stmt.getResultSet();
-			User usr = new User(res);
-			return usr;
 		}
-		catch(Exception e)
+		
+		
+		return log.exit(_ini);
+	}
+
+	public static User userAuth(String user, String pass) throws DbException, NotFoundException
+	{
+		log.entry();
+		User usr = new User();
+		try
 		{
-			throw new DbException(e);
+			Ini ini = getIniDb();
+			
+			String passInDb = ini.get("user", user);
+			
+			// record not found
+			if (passInDb == null)
+			{
+					throw log.throwing( new NotFoundException( "Record not found" ) );
+			}
+			
+			// password did not match
+			if (!passInDb.equals(Util.md5(pass)))
+			{
+					throw log.throwing( new NotFoundException( "Record not found" ) );
+			}
+			
+			usr.email = user;
+			usr.password = passInDb;
 		}
-		finally
-		{
-			Util.closeQuietly(stmt);
-			Util.closeQuietly(conn);
+		catch (InvalidFileFormatException e) {
+			throw log.throwing(new DbException(e));
 		}
+		catch (IOException e) {
+			throw log.throwing(new DbException(e));
+		}
+		
+		return log.exit(usr);
 	}
 }
