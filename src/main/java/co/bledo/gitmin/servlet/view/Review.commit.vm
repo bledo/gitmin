@@ -15,27 +15,26 @@
 ## under the License.
 ##
 
-#foreach ($mapEntry in $lists.entrySet())
- 	<table class="table">
-	<thead>
-		<tr>
-			<th>&nbsp;</th>
-			<th>Email</th>
-			<th>Name</th>
-			<th>Commit</th>
-			<th>Subject</th>
-		</tr>
-	</thead>
-	<tbody>
-	#foreach ($item in $mapEntry.value)
-		<tr>
-				<td><img src="$item.gravatar" /></td>
-				<td>${item.email}</td>
-				<td>$item.name</td>
-				<td><a href="$base/review/commit/repo/$mapEntry.key/hash/$item.hash">$item.hash</a></td>
-				<td>$item.subject</td>
-		</tr>
-	#end
-	</tbody>
+<table>
+#foreach ($nfo in $nfolist)
+	<tr>
+		<td>
+			<h4>$util.escapeHtml($nfo.oldFile)</h4>
+		</td>
+		<td>
+			<h4>$util.escapeHtml($nfo.newFile)</h4>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<pre>$util.escapeHtml($nfo.oldContents)</pre>
+		</td>
+		<td>
+			<pre>$util.escapeHtml($nfo.newContents)</pre>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="2"><pre>$util.escapeHtml($nfo.diff)</pre></td>
+	</tr>
 #end
 </table>

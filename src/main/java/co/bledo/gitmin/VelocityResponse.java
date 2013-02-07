@@ -92,7 +92,7 @@ public class VelocityResponse extends co.bledo.mvc.response.VelocityResponse
 		assign("request", req);
 		
 		//assign("auth", req.getSession().getAttribute("is_logged"));
-		//assign("base", req.getContextPath());
+		assign("base", req.getContextPath());
 		assign("util", Util.class);
 		assign("gitmin", Gitmin.class);
 		//String user = (String) req.getSession().getAttribute("username");

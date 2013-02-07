@@ -20,7 +20,7 @@
 <head>
 <title>$TITLE</title>
 <!-- Bootstrap -->
-<link href="/css/bootstrap.min.css" rel="stylesheet">
+<link href="$base/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
 $NAVBAR
@@ -42,6 +42,6 @@ $NAVBAR
 </div>
 
 <script src="http://code.jquery.com/jquery-latest.js"></script>
-<script src="/js/bootstrap.min.js"></script>
+<script src="$base/js/bootstrap.min.js"></script>
 </body>
 </html>

@@ -31,6 +31,7 @@ public class PrivateServlet extends BaseServlet
 	
 	private static final co.bledo.logger.Logger log = co.bledo.logger.Logger.getLogger(PrivateServlet.class);
 
+	/*
 	@Override
 	protected Response processRequest(Request req) throws Exception
 	{
@@ -50,5 +51,6 @@ public class PrivateServlet extends BaseServlet
 		
 		return resp;
 	}
+	*/
 	
 }

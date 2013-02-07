@@ -1,7 +1,5 @@
 package co.bledo.gitmin;
 
-import static org.junit.Assert.*;
-
 import java.io.IOException;
 import java.util.List;
 
@@ -17,17 +15,23 @@ import co.bledo.gitmin.db.User;
 public class GitTest {
 
 	@Test
+	public void testClone() throws GitAPIException
+	{
+		//GitminReview.cloneRepo("https://github.com/bledo/gitmin.git", "gitmin");
+	}
+	
+	@Test
 	public void test() throws AmbiguousObjectException, NoHeadException, IOException, GitAPIException {
 		//fail("Not yet implemented");
 		
 		List<String> list = GitminReview.getReviewList(
 			new User(),
-			"refs/heads/test",
-			"refs/heads/master"
+			"refs/heads/master",
+			"refs/remotes/origin/master"
 		);
 		
 		Assert.assertNotNull(list);
-		Assert.assertTrue(!list.isEmpty());
+		//Assert.assertTrue(!list.isEmpty());
 		
 		for (String str : list)
 		{

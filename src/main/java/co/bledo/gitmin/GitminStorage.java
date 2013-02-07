@@ -26,6 +26,8 @@ import co.bledo.gitmin.db.User;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 /*
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -36,6 +38,7 @@ import java.sql.SQLException;
 
 import org.ini4j.Ini;
 import org.ini4j.InvalidFileFormatException;
+import org.ini4j.Profile.Section;
 
 
 public class GitminStorage
@@ -150,4 +153,32 @@ public class GitminStorage
 		
 		return log.exit(usr);
 	}
+
+	public static Map<String, String> getRepos()
+	{
+		log.entry();
+		Map<String, String> map = new HashMap<String, String>();
+		
+		Ini ini;
+		try {
+			ini = getIniDb();
+			Section section = ini.get("repos");
+			for (String key : section.keySet())
+			{
+				map.put(key, section.get(key));
+			}
+		} catch (InvalidFileFormatException e) {
+			log.catching(e);
+		} catch (IOException e) {
+			log.catching(e);
+		}
+		
+		return log.exit(map);
+	}
 }
+
+
+
+
+
+

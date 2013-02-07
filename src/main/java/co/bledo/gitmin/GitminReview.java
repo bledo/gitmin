@@ -7,9 +7,12 @@ import java.util.List;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.NoHeadException;
-import org.eclipse.jgit.errors.AmbiguousObjectException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
+import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryBuilder;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -21,60 +24,75 @@ public class GitminReview {
 
 	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(GitminReview.class);
 
-	public static List<String> getReviewList(User user, String refFrom, String refTo) throws AmbiguousObjectException, IOException, NoHeadException, GitAPIException
+	public static List<String> getReviewList(User user, String refFrom, String refTo)
 	{
 		log.entry(user, refFrom, refTo);
-		
-		
+		Repository repo = null;
 		List<String> list = new ArrayList<String>();
-		RepositoryBuilder builder = new RepositoryBuilder();
-		Repository repository = builder.setGitDir(new File(""))
-					.readEnvironment()
-					.findGitDir()
-					.build();
-		/*
-		//FileRepositoryBuilder builder = new FileRepositoryBuilder();
-		Repository repository = builder.setGitDir(new File("/srv/git/webtd.git"))
-		  .readEnvironment() // scan environment GIT_* variables
-		  .findGitDir() // scan up the file system tree
-		  .build();
-		*/
-		
-		Git git = new Git(repository);
-		
-		for (RevCommit commit : git.log().call())
+		try
 		{
-			list.add( commit.getName() );
+			RepositoryBuilder builder = new RepositoryBuilder();
+			repo = builder.setGitDir(new File("/home/ricardo/dev/gitmin/.git"))
+						.readEnvironment()
+						.findGitDir()
+						.build();
+			
+			Git git = new Git(repo);
+			
+			RevWalk walk = new RevWalk(repo);
+			ObjectId from = repo.resolve(refFrom);  // refs/heads/master
+			ObjectId to = repo.resolve(refTo); //refs/remotes/origin/master
+			
+			walk.markStart(walk.parseCommit(from));
+			walk.markUninteresting(walk.parseCommit(to));
+			
+			for (RevCommit commit : walk)
+			{
+				list.add( commit.getName() );
+			}
+			
+			walk.dispose();
+			
+			return log.exit(list);
+			
+		} catch (MissingObjectException e) {
+			log.catching(e);
+		} catch (IncorrectObjectTypeException e) {
+			log.catching(e);
+		} catch (IOException e) {
+			log.catching(e);
 		}
-		
-		RevWalk walk = new RevWalk(repository);
-		ObjectId from = repository.resolve(refFrom);  // refs/heads/master
-		ObjectId to = repository.resolve(refTo); //refs/remotes/origin/master
-		
-		/*
-		if (to == null)
+		finally
 		{
-			log.info("to: ", to);
+			if (repo != null)
+			{
+				repo.close();
+			}
 		}
-		if (from == null)
-		{
-			log.info("from: ", from);
-		}
-
-		walk.markStart(walk.parseCommit(from));
-		walk.markUninteresting(walk.parseCommit(to));
-		*/
-		
-		for (RevCommit commit : walk)
-		{
-			list.add( commit.getName() );
-		}
-		
-		walk.dispose();
-		
 		return log.exit(list);
 	}
-
+	
+	public static void cloneRepo(String url, String name) throws GitAPIException
+	{
+		log.entry(url, name);
+		Repository repo = null;
+		try
+		{
+			Git git = Git.cloneRepository()
+				.setCloneAllBranches(true)
+				.setBare(true)
+				.setDirectory(new File( GitminConfig.getGitRepositoriesPath() + "/" + name))
+				.setURI(url)
+				.call();
+				
+		} catch (InvalidRemoteException e) {
+			throw log.throwing(e);
+		} catch (TransportException e) {
+			throw log.throwing(e);
+		} catch (GitAPIException e) {
+			throw log.throwing(e);
+		}
+	}
 }
 
 
