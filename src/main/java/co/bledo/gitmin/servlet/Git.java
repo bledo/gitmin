@@ -19,21 +19,38 @@ package co.bledo.gitmin.servlet;
 */
 
 
-import co.bledo.gitmin.Gitmin;
 import co.bledo.gitmin.GitminConfig;
 
+import java.io.IOException;
 import java.util.Enumeration;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-@WebServlet(name = "Auth", urlPatterns = {"/git/*"})
+@WebServlet(name = "Git", urlPatterns = {"/git/*"})
 public class Git extends org.eclipse.jgit.http.server.GitServlet
 {
 	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(Git.class);
 	
 	private static final long serialVersionUID = 1L;
+	
+	@Override
+	public void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException
+	{
+		String user = req.getRemoteUser();
+		if (user == null)
+		{
+			res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			res.getWriter().println("<html><body><h1>Access Denied</h1></body></html>");
+		}
+		else
+		{
+			super.service(req, res);
+		}
+	}
 	
 	//base-path
 	@Override
