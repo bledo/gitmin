@@ -18,7 +18,7 @@ package co.bledo.gitmin.db;
  *
 */
 
-public class User {
-	public String email = "";
-	public String password = "";
+public class Repo {
+	public String name = "";
+	public String url = "";
 }

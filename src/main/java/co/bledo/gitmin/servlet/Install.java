@@ -11,6 +11,7 @@ public class Install extends PrivateServlet
 {
 	public Response index(Request req)
 	{
+		/*
 		GitminStorage.query("DROP TABLE users" );
 		GitminStorage.query("CREATE TABLE users (user_id integer primary key autoincrement, email string)" );
 		GitminStorage.query("DROP TABLE commits" );
@@ -27,12 +28,13 @@ public class Install extends PrivateServlet
 		GitminStorage.query("CREATE TABLE notes (note_id integer primary key autoincrement, commit_id integer, file string, user_id integer, note string, rate int, created date)");
 		GitminStorage.query("CREATE INDEX notes_commit_id_rdx ON notes (commit_id)");
 		return null;
+		*/
 		
 		//git log --all --reverse --no-merges --pretty="INSERT INTO commits (hash, reviewed, author, created) VALUES ('%H', 1, '%ae', datetime(%ct, 'unixepoch'));" | sqlite3 data.sqlite3
 		//#for i in `git log --all --pretty="%H"`; do
 		//#       echo $i
 		//#done
-		
+		return null;
 	}
 
 

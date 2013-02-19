@@ -21,9 +21,7 @@ package co.bledo.gitmin.servlet;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.DateFormat;
-import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -33,24 +31,14 @@ import java.util.Map;
 
 import javax.servlet.annotation.WebServlet;
 
-import co.bledo.Util;
-import co.bledo.gitmin.GitminConfig;
-import co.bledo.gitmin.GitminStorage;
-import co.bledo.gitmin.VelocityResponse;
-import co.bledo.gitmin.git.CommitInfo;
-import co.bledo.gitmin.git.GitListItem;
-import co.bledo.mvc.Request;
-import co.bledo.mvc.response.Response;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
-import org.eclipse.jgit.diff.PatchIdDiffFormatter;
 import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.errors.CorruptObjectException;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
-import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
@@ -63,10 +51,18 @@ import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
-import org.eclipse.jgit.util.io.DisabledOutputStream;
+
+import co.bledo.Util;
+import co.bledo.gitmin.GitminConfig;
+import co.bledo.gitmin.GitminStorage;
+import co.bledo.gitmin.VelocityResponse;
+import co.bledo.gitmin.db.Repo;
+import co.bledo.gitmin.git.CommitInfo;
+import co.bledo.gitmin.git.GitListItem;
+import co.bledo.mvc.Request;
+import co.bledo.mvc.response.Response;
 
 
-@WebServlet(name = "Repo", urlPatterns = {"/review/*"})
 public class Review extends PrivateServlet
 {
 	private static final long serialVersionUID = 1L;
@@ -80,12 +76,11 @@ public class Review extends PrivateServlet
 		
 		DateFormat dformat = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
 		
-		Map<String, String> repos = GitminStorage.getRepos();
+		List<Repo> repos = GitminStorage.getRepos();
 		Map<String, List<GitListItem>> lists = new HashMap<String, List<GitListItem>>();
-		for (String repoName : repos.keySet())
+		for (Repo repo : repos)
 		{
-			String repoUrl = repos.get(repoName);
-			Git git = Git.open(new File(GitminConfig.getGitRepositoriesPath() + "/" + repoName));
+			Git git = Git.open(new File(GitminConfig.getGitRepositoriesPath() + "/" + repo.name));
 			Iterable<RevCommit> commits = git.log().setMaxCount(20).call();
 			List<GitListItem> list = new ArrayList<GitListItem>();
 			for (RevCommit commit : commits)
@@ -101,22 +96,12 @@ public class Review extends PrivateServlet
 				list.add(item);
 			}
 			
-			lists.put(repoName, list);
+			lists.put(repo.name, list);
 		}
 		
 		VelocityResponse resp = VelocityResponse.newInstance(request, this);
 		resp.assign("lists", lists);
 		
-		/*
-		resp.assign(
-			"LIST_OPEN",
-			GitminReview.getReviewList(
-				GitminSession.getUser(request),
-				"refs/heads/master",
-				"refs/remotes/origin/master"
-			)
-		);
-		*/
 		
 		return log.exit(resp);
 	}

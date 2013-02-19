@@ -62,41 +62,49 @@ public class GitminConfig
 
 	public static String getGitRepositoriesPath()
 	{
+		if (_props == null) { _init(); }
 		return getProp(Keys.git_repositories_paths);
 	}
 
 	public static int getGitSshPort()
 	{
+		if (_props == null) { _init(); }
 		return 2222;
 	}
 
 	public static String getGitExportAll()
 	{
+		if (_props == null) { _init(); }
 		return getProp(Keys.git_export_all);
 	}
 
 	public static String getDbDriver()
 	{
+		if (_props == null) { _init(); }
 		return getProp("gitmin.db.driver");
 	}
 
 	public static String getDbUrl()
 	{
+		if (_props == null) { _init(); }
 		return getProp("gitmin.db.url");
 	}
 	
 	public static String getIniDbFile()
 	{
+		if (_props == null) { _init(); }
 		return getProp("gitmin.inidbfile");
 	}
 
 	public static String getDbAuthQuery()
 	{
+		if (_props == null) { _init(); }
 		return getProp("gitmin.db.auth.query");
 	}
 
 	public static List<String> getDbInitQueries()
 	{
+		if (_props == null) { _init(); }
 		List<String> list = new ArrayList<String>();
 		BledoProperties initProps = getProps().propPath("gitmin.db.auth.init");
 		for (String k : initProps.getRootKeys())
@@ -108,4 +116,21 @@ public class GitminConfig
 		}
 		return list;
 	}
-};
+	
+	public static String getStorageClass()
+	{
+		if (_props == null) { _init(); }
+		return _props.get("gitmin.db.adapter.class");
+	}
+	
+	public static BledoProperties getStorageProps()
+	{
+		if (_props == null) { _init(); }
+		return _props.propPath("gitmin.db.adapter.params");
+	}
+}
+
+
+
+
+

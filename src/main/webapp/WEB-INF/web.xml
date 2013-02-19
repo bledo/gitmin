@@ -2,8 +2,43 @@
  "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
  "http://java.sun.com/dtd/web-app_2_3.dtd" >
 <web-app>
-        <display-name>Bledo</display-name>
+	<display-name>Gitmin</display-name>
 	<welcome-file-list>
 		<welcome-file>/index.jsp</welcome-file>
+		<!--
+		<welcome-file>/index</welcome-file>
+		-->
 	</welcome-file-list>
+	
+  <servlet>
+    <servlet-name>Index</servlet-name>
+    <servlet-class>co.bledo.gitmin.servlet.Index</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>Index</servlet-name>
+    <url-pattern>/index/*</url-pattern>
+    <url-pattern>/Index/*</url-pattern>
+  </servlet-mapping>
+	
+  <servlet>
+    <servlet-name>Git</servlet-name>
+    <servlet-class>co.bledo.gitmin.servlet.Git</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>Git</servlet-name>
+    <url-pattern>/git/*</url-pattern>
+  </servlet-mapping>
+  
+  
+  <servlet>
+    <servlet-name>Repo</servlet-name>
+    <servlet-class>co.bledo.gitmin.servlet.Review</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>Repo</servlet-name>
+    <url-pattern>/review/*</url-pattern>
+  </servlet-mapping>
+  
+  
+	
 </web-app>

@@ -19,15 +19,15 @@ package co.bledo.gitmin;
 */
 
 
+import java.util.List;
+
 import co.bledo.Util;
+import co.bledo.gitmin.db.Db;
 import co.bledo.gitmin.db.DbException;
 import co.bledo.gitmin.db.NotFoundException;
+import co.bledo.gitmin.db.Repo;
+import co.bledo.gitmin.db.Storage;
 import co.bledo.gitmin.db.User;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 /*
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -36,144 +36,49 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 */
 
-import org.ini4j.Ini;
-import org.ini4j.InvalidFileFormatException;
-import org.ini4j.Profile.Section;
-
 
 public class GitminStorage
 {
 	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(GitminStorage.class);
 	
-	public static void query(String sql)
-	{
-	}
-	
-	/*
-	private boolean __init = false;
-	private synchronized void _init() throws ClassNotFoundException
-	{
-		if (!__init)
-		{
-			log.info("initializing database...");
-			Class.forName( GitminConfig.getDbDriver() );
-
-			Connection conn = null;
-			try {
-				String connUrl = GitminConfig.getDbUrl();
-				log.debug("connecting to {0}", connUrl);
-				conn = DriverManager.getConnection( connUrl );
-				log.info("running initial DB queriies...");
-				for (String sql : GitminConfig.getDbInitQueries())
-				{
-					log.debug("...query : {0}", sql);
-					PreparedStatement stmt = conn.prepareStatement(sql);
-					stmt.execute();
-					Util.closeQuietly(stmt);
-				}
-			} catch (SQLException e) {
-				log.error("{0}", e);
-			}
-			finally
-			{
-				Util.closeQuietly(conn);
-			}
-			__init = true;
-		}
-	}
-
-	private Connection getConnection() throws ClassNotFoundException, SQLException
-	{
-		if (__init == false) { _init(); }
-		Connection conn = DriverManager.getConnection( GitminConfig.getDbUrl() );
-		return conn;
-	}
-	*/
-	
-	
-	private static Ini _ini = null;
-	private static synchronized Ini getIniDb() throws InvalidFileFormatException, IOException
+	private static Storage _store = null;
+	private synchronized static void _init() throws DbException
 	{
 		log.entry();
-		if (_ini == null)
+		if (_store != null)
 		{
-			String filename = GitminConfig.getIniDbFile();
-			File file = new File(filename);
-			if (file.createNewFile())
-			{
-				log.info("No database ini file ... creating a default one");
-				// new file
-				_ini = new Ini( file );
-				_ini.add("user", "admin", Util.md5("admin"));
-				_ini.store();
-			}
-			else
-			{
-				// existing file
-				_ini = new Ini( file );
-			}
-
+			log.exit();
+			return;
 		}
-		
-		
-		return log.exit(_ini);
+		_store = Db.getStorageAdapter();
+		log.exit();
 	}
 
 	public static User userAuth(String user, String pass) throws DbException, NotFoundException
 	{
+		_init();
+		
 		log.entry();
-		User usr = new User();
-		try
+		if (pass == null) { pass = ""; }
+		
+		// password did not match
+		User usr = _store.userFetch(user);
+		if( !Util.md5(pass).equals(usr.password) )
 		{
-			Ini ini = getIniDb();
-			
-			String passInDb = ini.get("user", user);
-			
-			// record not found
-			if (passInDb == null)
-			{
-					throw log.throwing( new NotFoundException( "Record not found" ) );
-			}
-			
-			// password did not match
-			if (!passInDb.equals(Util.md5(pass)))
-			{
-					throw log.throwing( new NotFoundException( "Record not found" ) );
-			}
-			
-			usr.email = user;
-			usr.password = passInDb;
-		}
-		catch (InvalidFileFormatException e) {
-			throw log.throwing(new DbException(e));
-		}
-		catch (IOException e) {
-			throw log.throwing(new DbException(e));
+			log.debug("md5 {} != {}", usr.password, Util.md5(pass));
+			throw log.throwing( new NotFoundException( "Record not found" ) );
 		}
 		
 		return log.exit(usr);
 	}
 
-	public static Map<String, String> getRepos()
+	public static List<Repo> getRepos() throws DbException
 	{
 		log.entry();
-		Map<String, String> map = new HashMap<String, String>();
 		
-		Ini ini;
-		try {
-			ini = getIniDb();
-			Section section = ini.get("repos");
-			for (String key : section.keySet())
-			{
-				map.put(key, section.get(key));
-			}
-		} catch (InvalidFileFormatException e) {
-			log.catching(e);
-		} catch (IOException e) {
-			log.catching(e);
-		}
+		List<Repo> repos = repos = _store.repositoryFetchAll();
 		
-		return log.exit(map);
+		return log.exit(repos);
 	}
 }
 
